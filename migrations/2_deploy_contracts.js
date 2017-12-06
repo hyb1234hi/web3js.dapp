@@ -1,5 +1,5 @@
-var Adoption = artifacts.require("EntityTracker");
+var EntityTracker = artifacts.require("EntityTracker");
 
 module.exports = function(deployer) {
-  deployer.deploy(Adoption);
+  deployer.deploy(EntityTracker);
 };
