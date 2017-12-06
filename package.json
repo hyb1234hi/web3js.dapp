@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/cesarrosales/web3.ethereum.dapp#readme",
   "dependencies": {
-    "web3": "^1.0.0-beta.26"
+    "web3": "github:ethereum/web3.js"
   }
 }
