@@ -1,21 +1,48 @@
 pragma solidity ^0.4.17;
 
-contract EntityTracker {
-    string private entityName;
-    uint private entityId;
-    event EntityAdded(string name, uint id);
+contract BaseContract {
+    address originatingAddress;
 
-    function EntityTracker() public {
-        entityName = "null";
+    function BaseContract() public {
+        originatingAddress = msg.sender;
     }
-    
-    function setEntity(string n, uint i) public {
-        entityName = n;
-        entityId = i;
-        EntityAdded(entityName, entityId);
+
+    modifier ownerSpecificOp {
+        require(msg.sender == originatingAddress);
+        _;
     }
-    
-    function getEntity()  public constant returns (string, uint) {
-        return (entityName, entityId);
+}
+
+contract EntityTracker is BaseContract {
+
+    struct Entity {
+        bytes16 name;
+        uint id;
+    }
+
+    mapping(address => Entity) entities;
+
+    address[] public entityObjects;
+
+    event EntityAdded(bytes16 name, uint id);
+
+    function setEntity(address a, uint i, bytes16 n) ownerSpecificOp public {
+        var entity = entities[a];
+        entity.name = n;
+        entity.id = i;
+        entityObjects.push(a)-1;
+        EntityAdded(entity.name, entity.id);
+    }
+
+    function getEntities() view public returns(address[]) {
+        return entityObjects;
+    }
+
+    function getEntity(address a) view public returns (bytes16, uint) {
+        return (entities[a].name, entities[a].id);
+    }
+
+    function entitiyCount() view public returns (uint) {
+        return entityObjects.length;
     }
 }

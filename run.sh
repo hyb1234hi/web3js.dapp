@@ -1,1 +1,1 @@
-truffle compile && truffle migrate && npm run dev
+rm -rf build && truffle compile && truffle migrate && npm run dev

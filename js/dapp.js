@@ -40,13 +40,22 @@ App = {
         App.helpers.isLoading(false);
 
         var entityTrackerInstance;
-        App.contracts.EntityTracker.deployed().then(function(instance) {
-            entityTrackerInstance = instance;
-            return entityTrackerInstance.getEntity.call();
-        }).then(function(entity) {
-            console.log('payload from initial contract call:');
-            console.log(entity)
-            App.helpers.updateEntityCard(entity[0], entity[1]);
+
+        web3.eth.getAccounts(function(error, accounts) {
+            if (error) {
+                console.log(error);
+            }
+
+            var account = accounts[0];
+
+            App.contracts.EntityTracker.deployed().then(function(instance) {
+                entityTrackerInstance = instance;
+                return entityTrackerInstance.getEntity.call(account);
+            }).then(function(entity) {
+                var name = App.helpers.bytesToString(entity[0]);
+                var id = entity[1];
+                App.helpers.updateEntityCard(name, id);
+            });
         });
 
         return App.watchContractEvent();
@@ -54,7 +63,6 @@ App = {
 
     watchContractEvent: function() {
         App.contracts.EntityTracker.deployed().then(function(instance) {
-            console.log('i got here')
             return instance.EntityAdded();
         }).then(function(entityAddedEvent) {
             entityAddedEvent.watch(function (error, result) {
@@ -62,10 +70,17 @@ App = {
                     App.helpers.isLoading(false);
                     console.log(error);
                 } else {
-                    App.helpers.isLoading(false);
+                    if (result.blockHash != $("#ehash").html()) {
+                        App.helpers.isLoading(false);
+                    }
                     console.log('event received');
                     console.log('new entity: ' + result.args.name);
-                    App.helpers.updateEntityCard(result.args.name, result.args.id);
+                    
+                    //$("#ehash").value(result.blockHash);
+                    var name = App.helpers.bytesToString(result.args.name);
+                    var id = result.args.id;
+
+                    App.helpers.updateEntityCard(name, id);
                 }
             });
         })
@@ -89,25 +104,25 @@ App = {
         App.helpers.isLoading(true);
 
         web3.eth.getAccounts(function(error, accounts) {
-        if (error) {
-            console.log(error);
-        }
+            if (error) {
+                console.log(error);
+            }
 
-        var account = accounts[0];
+            var account = accounts[0];
 
-        // get the contract and execute the transaction
-        App.contracts.EntityTracker.deployed().then(function(instance) {
-            return instance.setEntity(entityName, entityId, {
-                    from: account
+            // get the contract and execute the transaction
+            App.contracts.EntityTracker.deployed().then(function(instance) {
+                return instance.setEntity(account, entityId, entityName, {
+                        from: account
+                    });
+                }).then(function(response) {
+                    console.log('set entity transaction response:')
+                    console.log(response);
+                })
+                .catch(function(err) {
+                    App.helpers.isLoading(false);
+                    console.log(err.message);
                 });
-            }).then(function(response) {
-                console.log('set entity transaction response:')
-                console.log(response);
-            })
-            .catch(function(err) {
-                App.helpers.isLoading(false);
-                console.log(err.message);
-            });
         });
     },
     helpers: {
@@ -123,6 +138,9 @@ App = {
                 $("#loader").hide();
                 $("#entitycard").show();
             }
+        },
+        bytesToString: function(s) {
+            return web3.toAscii(s);
         }
     }
   };
