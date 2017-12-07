@@ -1,5 +1,9 @@
 {
   "server": {
     "baseDir": [".", "./build/contracts"]
-  }
+  },
+ "serveStatic" : [{
+    "route": "/public",
+    "dir": "public"
+}]
 }

@@ -1,6 +1,7 @@
 App = {
     web3Provider: null,
     contracts: {},
+    helpers: {},
   
     init: function() {
         return App.initWeb3();
@@ -29,11 +30,6 @@ App = {
             console.log(App.contracts.EntityTracker);
             return App.bindUserInterface();
         });
-        return App.watchContractEvent();
-    },
-  
-    watchContractEvent: function() {
-        return App.bindUserInterfaceEvents();
     },
   
     bindUserInterfaceEvents: function() {
@@ -41,6 +37,8 @@ App = {
     },
 
     bindUserInterface: function() {
+        App.helpers.isLoading(false);
+
         var entityTrackerInstance;
         App.contracts.EntityTracker.deployed().then(function(instance) {
             entityTrackerInstance = instance;
@@ -48,9 +46,34 @@ App = {
         }).then(function(entity) {
             console.log('payload from initial contract call:');
             console.log(entity)
-            $("#ename").text(entity[0]);
-            $("#eid").text(entity[1]);
+            App.helpers.updateEntityCard(entity[0], entity[1]);
         });
+
+        return App.watchContractEvent();
+    },
+
+    watchContractEvent: function() {
+        App.contracts.EntityTracker.deployed().then(function(instance) {
+            console.log('i got here')
+            return instance.EntityAdded();
+        }).then(function(entityAddedEvent) {
+            entityAddedEvent.watch(function (error, result) {
+                if (error) {
+                    App.helpers.isLoading(false);
+                    console.log(error);
+                } else {
+                    App.helpers.isLoading(false);
+                    console.log('event received');
+                    console.log('new entity: ' + result.args.name);
+                    App.helpers.updateEntityCard(result.args.name, result.args.id);
+                }
+            });
+        })
+        .catch(function(err) {
+            console.log(err.message);
+        });
+
+        return App.bindUserInterfaceEvents();
     },
 
     submitNewEntity: function(event) {
@@ -63,6 +86,8 @@ App = {
             alert('invalid input data');
         }
 
+        App.helpers.isLoading(true);
+
         web3.eth.getAccounts(function(error, accounts) {
         if (error) {
             console.log(error);
@@ -73,15 +98,32 @@ App = {
         // get the contract and execute the transaction
         App.contracts.EntityTracker.deployed().then(function(instance) {
             return instance.setEntity(entityName, entityId, {
-                from: account
+                    from: account
+                });
+            }).then(function(response) {
+                console.log('set entity transaction response:')
+                console.log(response);
+            })
+            .catch(function(err) {
+                App.helpers.isLoading(false);
+                console.log(err.message);
             });
-        }).then(function(response) {
-            console.log(response);
-        })
-        .catch(function(err) {
-            console.log(err.message);
         });
-    });
+    },
+    helpers: {
+        updateEntityCard: function(name, id) {
+            $("#ename").text(name);
+            $("#eid").text(id);
+        },
+        isLoading: function(bool) {
+            if (bool) {
+                $("#loader").show();
+                $("#entitycard").hide();
+            } else {
+                $("#loader").hide();
+                $("#entitycard").show();
+            }
+        }
     }
   };
   
