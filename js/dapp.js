@@ -63,8 +63,9 @@ App = {
 
     watchContractEvent: function() {
         App.contracts.EntityTracker.deployed().then(function(instance) {
-            return instance.EntityAdded();
+            return instance.EntityAdded({}, 'latest');
         }).then(function(entityAddedEvent) {
+            console.log(entityAddedEvent);
             entityAddedEvent.watch(function (error, result) {
                 if (error) {
                     App.helpers.isLoading(false);
@@ -73,10 +74,8 @@ App = {
                     if (result.blockHash != $("#ehash").html()) {
                         App.helpers.isLoading(false);
                     }
-                    console.log('event received');
-                    console.log('new entity: ' + result.args.name);
                     
-                    //$("#ehash").value(result.blockHash);
+                    $("#ehash").text(result.blockHash);
                     var name = App.helpers.bytesToString(result.args.name);
                     var id = result.args.id;
 
