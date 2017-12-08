@@ -70,10 +70,9 @@ App = {
                 if (error) {
                     App.helpers.isLoading(false);
                     console.log(error);
+                    return;
                 } else {
-                    if (result.blockHash != $("#ehash").html()) {
-                        App.helpers.isLoading(false);
-                    }
+                    App.helpers.isLoading(false);
                     
                     $("#ehash").text(result.blockHash);
                     var name = App.helpers.bytesToString(result.args.name);
@@ -98,6 +97,7 @@ App = {
 
         if (isNaN(entityId) || !entityName) {
             alert('invalid input data');
+            return;
         }
 
         App.helpers.isLoading(true);
